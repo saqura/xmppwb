@@ -7,7 +7,7 @@ A bot that bridges XMPP (chats and MUCs) with webhooks, thus making it possible 
 
 Install
 -------
-It is recommended to install ``xmppwb`` into a virtualenv. It requires *Python 3.4+* can be installed using pip3::
+It is recommended to install ``xmppwb`` into a virtualenv. It requires *Python 3.4+* and can be installed using pip3::
 
   pip3 install xmppwb
 
