@@ -7,13 +7,11 @@ A bot that bridges XMPP (chats and MUCs) with webhooks, thus making it possible 
 
 Install
 -------
-``xmppwb`` requires Python 3.4+ and depends on the following libraries, which can be installed using pip3::
+It is recommended to install ``xmppwb`` into a virtualenv. It requires *Python 3.4+* can be installed using pip3::
 
-    pip3 install aiohttp pyyaml slixmpp
+  pip3 install xmppwb
 
-After cloning this repository you can run ``xmppwb`` like this::
-
-    python3 xmppwb.py --help
+which will automatically install the dependencies (*aiohttp*, *pyyaml* and *slixmpp*).
 
 Configuration
 -------------
@@ -48,4 +46,8 @@ Usage
 
 To run the bridge::
 
-    python3 xmppwb.py --config configfile.conf
+    xmppwb --config configfile.conf
+
+or::
+
+    python3 -m xmppwb --config configfile.conf
