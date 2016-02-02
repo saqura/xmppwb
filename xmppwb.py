@@ -99,6 +99,7 @@ class XMPPWebhookBridge():
         """
         from_jid = msg['from']
         logging.debug("Handling outgoing webhook. (from {})".format(from_jid))
+
         username = str(from_jid)
         if 'override_username' in outgoing_webhook:
             if msg['type'] == 'groupchat':
@@ -116,13 +117,18 @@ class XMPPWebhookBridge():
                     nick=from_jid.local,
                     jid=from_jid.bare)
 
+        message = msg['body']
+        if 'message_template' in outgoing_webhook:
+            message = outgoing_webhook['message_template'].format(
+                msg=message)
+
         payload = {
-            "text": msg['body'],
+            "text": message,
             "username": username
         }
 
-        if "override_channel" in outgoing_webhook:
-            payload['channel'] = outgoing_webhook["override_channel"]
+        if 'override_channel' in outgoing_webhook:
+            payload['channel'] = outgoing_webhook['override_channel']
 
         logging.debug("Sending outgoing webhook. (from {})".format(from_jid))
         request = await self.http_client.post(
