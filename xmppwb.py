@@ -130,6 +130,18 @@ class XMPPWebhookBridge():
         if 'override_channel' in outgoing_webhook:
             payload['channel'] = outgoing_webhook['override_channel']
 
+        # Attachment formatting is useful for integrating with Rocket.Chat.
+        if ('use_attachment_formatting' in outgoing_webhook and
+                outgoing_webhook['use_attachment_formatting']):
+            payload = {
+                "attachments": [{
+                    "title": "From: {}".format(username),
+                    # TODO: Add an option to change the link.
+                    # "title_link": "https://xmpp.org",
+                    "text": message
+                }]
+            }
+
         logging.debug("Sending outgoing webhook. (from {})".format(from_jid))
         request = await self.http_client.post(
             outgoing_webhook['url'],
