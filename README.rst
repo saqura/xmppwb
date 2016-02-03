@@ -20,6 +20,7 @@ A documented example config is provided in ``example.conf``. A simple config fil
     xmpp:
       jid: alice@example.com
       password: "<bot-password>"
+      # Define all MUCs that should be available to the bridges defined later.
       mucs:
         - jid: conference1@conference.example.com
           nickname: WebhookBridge
@@ -39,6 +40,8 @@ A documented example config is provided in ``example.conf``. A simple config fil
             - token: <your-token2>
 
 **Note that the password is stored in cleartext, so take precautions such as restricting file permissions. It is recommended to use a dedicated JID for this bridge.**
+
+The terminology ``incoming`` and ``outgoing`` in the config file refers to webhooks from the perspective of this bridge. The webhooks must also be defined on the other end (Rocket.Chat and Mattermost provide a UI for this, for example). An *outgoing webhook in Rocket.Chat* must be set up in the *incoming webhooks section in this bridge* and vice versa.
 
 Usage
 -----

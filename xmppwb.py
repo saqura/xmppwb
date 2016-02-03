@@ -155,9 +155,15 @@ class XMPPWebhookBridge():
         webhooks and relays the messages to XMPP."""
         if request.content_type == "application/json":
             payload = await request.json()
+            # print(payload)
         else:
             # TODO: Handle other content types
             payload = await request.post()
+
+        # Disgard empty messages
+        if payload['text'] == "":
+            return aiohttp.web.Response()
+
         token = payload['token']
         logging.debug("Handling incoming request from token {}".format(token))
         msg = payload['user_name'] + ": " + payload['text']
