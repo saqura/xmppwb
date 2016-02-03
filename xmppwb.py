@@ -290,6 +290,8 @@ class XMPPBridgeBot(ClientXMPP):
 
         self.add_event_handler("session_start", self.session_started)
         self.add_event_handler("message", self.message_received)
+        self.add_event_handler("connection_failed", self.connection_failed)
+        self.add_event_handler("failed_auth", self.auth_failed)
 
         self.register_plugin('xep_0030')  # Service Discovery
         self.register_plugin('xep_0045')  # Multi-User Chat
@@ -340,6 +342,18 @@ class XMPPBridgeBot(ClientXMPP):
         out_webhooks = self.main_bridge.outgoing_mappings[from_jid.bare]
         for outgoing_webhook in out_webhooks:
             await self.main_bridge.handle_outgoing(outgoing_webhook, msg)
+
+    async def connection_failed(self, error):
+        """This coroutine is triggered when the connection to the XMPP server
+        failed.
+        """
+        logging.error("Connection to XMPP failed.")
+
+    async def auth_failed(self, error):
+        """This coroutine is triggered when the XMPP server has rejected the
+        login credentials.
+        """
+        logging.error("Authetication with XMPP failed.")
 
 
 class InvalidConfigError(Exception):
