@@ -153,7 +153,11 @@ class XMPPWebhookBridge():
     async def handle_incoming(self, request):
         """This coroutine handles incoming webhooks: It receives incoming
         webhooks and relays the messages to XMPP."""
-        payload = await request.post()
+        if request.content_type == "application/json":
+            payload = await request.json()
+        else:
+            # TODO: Handle other content types
+            payload = await request.post()
         token = payload['token']
         logging.debug("Handling incoming request from token {}".format(token))
         msg = payload['user_name'] + ": " + payload['text']
