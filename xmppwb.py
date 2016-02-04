@@ -79,8 +79,8 @@ class XMPPWebhookBridge():
                 bind_address,
                 port)
             self.http_server = loop.run_until_complete(http_create_server)
-            logging.info("Listening for incoming webhooks on {}:{}".format(
-                                                    bind_address, port))
+            logging.info("Listening for incoming webhooks on "
+                         "http://{}:{}/".format(bind_address, port))
         else:
             self.http_server = None
             logging.warn("No 'incoming_webhook_listener' in the config even "
@@ -130,7 +130,7 @@ class XMPPWebhookBridge():
         if 'override_channel' in outgoing_webhook:
             payload['channel'] = outgoing_webhook['override_channel']
 
-        # Attachment formatting is useful for integrating with Rocket.Chat.
+        # Attachment formatting is useful for integrating with RocketChat.
         if ('use_attachment_formatting' in outgoing_webhook and
                 outgoing_webhook['use_attachment_formatting']):
             payload = {
