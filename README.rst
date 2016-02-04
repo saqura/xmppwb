@@ -30,31 +30,31 @@ which will automatically install the dependencies (*aiohttp*, *pyyaml* and *slix
 Configuration
 =============
 
-A documented example config is provided in ``example.conf``. A simple config file looks like this:
+A documented example config is provided in ``example.conf``. A simple config file looks like this (the ``<placeholders>`` need to be changed):
 
 .. code-block:: yaml
 
     xmpp:
-      jid: alice@example.com
+      jid: <alice@example.com>
       password: "<bot-password>"
       # Define all MUCs that should be available to the bridges defined later.
       mucs:
-        - jid: conference1@conference.example.com
-          nickname: WebhookBridge
-          password: "<muc-password>"
+        - jid: <conference1@conference.example.com>
+          nickname: <nickname>
+          # password: "<muc-password>"
     incoming_webhook_listener:
       bind_address: "127.0.0.1"
       port: 5000
     bridges:
       - xmpp:
-          - muc: conference1@conference.example.com
+          - muc: <conference1@conference.example.com>
           - relay_all_normal: true
         webhooks:
           outgoing:
-            - url: http://127.0.0.1:8065/hooks/<yourtoken>
+            - url: <incoming-webhook-url-from-other-end>
               override_username: "{nick}"
           incoming:
-            - token: <your-token2>
+            - token: <outgoing-webhook-token-from-other-end>
 
 
 **Note that the password is stored in cleartext, so take precautions such as restricting file permissions. It is recommended to use a dedicated JID for this bridge.**
@@ -68,7 +68,7 @@ Integrating with Rocket.Chat
 An example config for bridging XMPP with `Rocket.Chat`_ is provided in ``rocketchat.example.conf``. It is recommended to copy it and fill out all ``<placeholders>``.
 
 1. To create the corresponding webhooks in RocketChat, go to *Administration->Integrations* and create a new incoming webhook. Here you can select the channel that you want to bridge with.
-2. After saving, a webhook URL will be generated. Copy it and fill it into the ``<incoming-webhook-url-from-rocketchat`` placeholder in the config file.
+2. After saving, a webhook URL will be generated. Copy it and fill it into the ``<incoming-webhook-url-from-rocketchat>`` placeholder in the config file.
 3. Now create an outgoing webhook. The URL is of the form ``http://{bind_adress}:{port}/`` and depends on your settings in the ``incoming_webhook_listener`` section. It defaults to ``http://127.0.0.1:5000/``.
 4. Copy the token and fill it into the ``<outgoing-webhook-token-from-rocketchat>`` placeholder.
 5. After having filled out all other placeholders, the bridge is ready to run (see `usage`_).
