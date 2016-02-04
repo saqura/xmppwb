@@ -376,11 +376,14 @@ def main():
 
     Gathers the command line arguments, reads the config and starts the bridge.
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="A bot that bridges XMPP (chats and MUCs) with webhooks, "
+        "thus making it possible to interact with services outside the XMPP "
+        "world.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
     parser.add_argument("--config", help="set the config file",
-                        default="xmppwb.conf")
+                        required=True)
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
@@ -399,7 +402,7 @@ def main():
         with open(config_filepath, 'r') as config_file:
             cfg = yaml.load(config_file)
     except FileNotFoundError:
-        logging.exception("Config file not found.")
+        logging.error("Config file not found. Exiting...")
         sys.exit(1)
 
     try:
