@@ -6,8 +6,6 @@ xmppwb - XMPP Webhook Bridge
 
 A bot that bridges XMPP (chats and MUCs) with webhooks, thus making it possible to interact with services outside the XMPP world. This can be used to connect XMPP to other chat services that provide a webhook API (for example `Rocket.Chat`_ or `Mattermost`_).
 
------
-
 .. contents::
    :local:
    :depth: 2
@@ -17,7 +15,7 @@ A bot that bridges XMPP (chats and MUCs) with webhooks, thus making it possible 
 Install
 =======
 
-``xmppwb`` requires *Python 3.4+* and can be installed using pip3:
+``xmppwb`` requires *Python 3.5+* and can be installed using pip3:
 
 .. code-block:: bash
 
@@ -35,6 +33,7 @@ A documented example config is provided in ``example.conf``. A simple config fil
 .. code-block:: yaml
 
     xmpp:
+      # This JID must exist.
       jid: <alice@example.com>
       password: "<bot-password>"
       # Define all MUCs that should be available to the bridges defined later.
