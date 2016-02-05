@@ -98,8 +98,6 @@ class XMPPWebhookBridge():
         received from XMPP and triggers external webhooks.
         """
         from_jid = msg['from']
-        logging.debug("Handling outgoing webhook. (from {})".format(from_jid))
-
         username = str(from_jid)
         if 'override_username' in outgoing_webhook:
             if msg['type'] == 'groupchat':
@@ -142,7 +140,8 @@ class XMPPWebhookBridge():
                 }]
             }
 
-        logging.debug("Sending outgoing webhook. (from {})".format(from_jid))
+        logging.debug("<-- Sending outgoing webhook. (from '{}')".format(
+                                                            from_jid))
         request = await self.http_client.post(
             outgoing_webhook['url'],
             data=json.dumps(payload),
@@ -165,16 +164,17 @@ class XMPPWebhookBridge():
             return aiohttp.web.Response()
 
         token = payload['token']
-        logging.debug("Handling incoming request from token {}".format(token))
+        logging.debug("--> Handling incoming request from token "
+                      "'{}'...".format(token))
         msg = payload['user_name'] + ": " + payload['text']
         for xmpp_normal_jid in self.incoming_normal_mappings[token]:
-            logging.debug("Sending a normal chat message to XMPP.")
+            logging.debug("<-- Sending a normal chat message to XMPP.")
             self.xmpp_client.send_message(mto=xmpp_normal_jid,
                                           mbody=msg,
                                           mtype="chat",
                                           mnick=payload['user_name'])
         for xmpp_muc_jid in self.incoming_muc_mappings[token]:
-            logging.debug("Sending a MUC chat message to XMPP.")
+            logging.debug("<-- Sending a MUC chat message to XMPP.")
             self.xmpp_client.send_message(mto=xmpp_muc_jid,
                                           mbody=msg,
                                           mtype="groupchat",
@@ -316,6 +316,8 @@ class XMPPBridgeBot(ClientXMPP):
         self.get_roster()
 
         for muc, nickname in self.main_bridge.mucs.items():
+            logging.debug("Joining MUC '{}' using nickname '{}'.".format(
+                                                                muc, nickname))
             if muc in self.main_bridge.muc_passwords:
                 self.plugin['xep_0045'].joinMUC(
                     muc,
@@ -334,7 +336,8 @@ class XMPPBridgeBot(ClientXMPP):
         a MUC) is received. It relays the message to the bridge.
         """
         from_jid = msg['from']
-        logging.debug("Received message from XMPP. (from {})".format(from_jid))
+        logging.debug("--> Received message from XMPP by {}: {}".format(
+                                                        from_jid, msg['body']))
         if msg['type'] in ('chat', 'normal'):
             out_webhooks = self.main_bridge.outgoing_mappings['all_normal']
             for outgoing_webhook in out_webhooks:
@@ -383,19 +386,34 @@ def main():
         "world.")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
-    parser.add_argument("--config", help="set the config file",
+    parser.add_argument("-c", "--config", help="set the config file",
                         required=True)
+    parser.add_argument("-l", "--logfile", help="enable logging to a file")
+    parser.add_argument("-d", "--debug", help="include debug output",
+                        action="store_true")
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
 
+    log_config = {
+        'format': '%(asctime)s %(levelname)-8s %(message)s',
+        'datefmt': '%d-%H:%M:%S'
+    }
+
     if args.verbose:
-        loglevel = logging.DEBUG
-        loop.set_debug(True)
+        log_config['level'] = logging.DEBUG
     else:
-        loglevel = logging.INFO
-    logging.basicConfig(level=loglevel,
-                        format='%(levelname)-8s %(message)s')
+        log_config['level'] = logging.INFO
+
+    if args.logfile:
+        log_config['filename'] = args.logfile
+
+    if args.debug:
+        loop.set_debug(True)
+
+    logging.getLogger('slixmpp').setLevel(logging.WARNING)
+    logging.getLogger('aiohttp').setLevel(logging.WARNING)
+    logging.basicConfig(**log_config)
 
     config_filepath = os.path.abspath(args.config)
     logging.info("Using config file {}".format(config_filepath))

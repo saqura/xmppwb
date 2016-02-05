@@ -53,7 +53,7 @@ Synopsis:
 
 .. code-block:: bash
 
-    $ xmppwb [-h] [-v] --config CONFIG
+    $ xmppwb [-h] [-v] -c CONFIG [-l LOGFILE] [-d]
 
 See also ``xmppwb --help``.
 
