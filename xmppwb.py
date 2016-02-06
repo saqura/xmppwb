@@ -194,14 +194,15 @@ class XMPPWebhookBridge():
         """Reads the outgoing webhook definitions from the config file."""
         bridges = cfg['bridges']
         for bridge in bridges:
-            if 'outgoing' not in bridge['webhooks']:
+            if 'outgoing_webhooks' not in bridge:
                 # No outgoing webhooks in this bridge.
                 continue
 
-            outgoing_webhooks = bridge['webhooks']['outgoing']
-            xmpp_endpoints = bridge['xmpp']
+            outgoing_webhooks = bridge['outgoing_webhooks']
+            xmpp_endpoints = bridge['xmpp_endpoints']
 
-            # Check whether all normal messages to this bot should be relayed.
+            # Check whether all normal messages to this bridge should be
+            # relayed.
             relay_all_normal = False
             for xmpp_endpoint in xmpp_endpoints:
                 if ('relay_all_normal' in xmpp_endpoint and
@@ -247,16 +248,16 @@ class XMPPWebhookBridge():
         """Reads the incoming webhook definitions from the config file."""
         bridges = cfg['bridges']
         for bridge in bridges:
-            if 'incoming' not in bridge['webhooks']:
+            if 'incoming_webhooks' not in bridge:
                 # No incoming webhooks in this bridge.
                 continue
 
-            incoming_webhooks = bridge['webhooks']['incoming']
-            xmpp_endpoints = bridge['xmpp']
+            incoming_webhooks = bridge['incoming_webhooks']
+            xmpp_endpoints = bridge['xmpp_endpoints']
             for incoming_webhook in incoming_webhooks:
                 if 'token' not in incoming_webhook:
                     raise InvalidConfigError("Invalid config file: "
-                                             "'url' missing from outgoing "
+                                             "'token' missing from outgoing "
                                              "webhook definition.")
                 token = incoming_webhook['token']
                 for xmpp_endpoint in xmpp_endpoints:
