@@ -43,12 +43,12 @@ Each entry in ``mucs`` has the following items:
 | **nickname**         | The nickname the bot should use in the MUC.            |
 +----------------------+--------------------------------------------------------+
 | **password**         | **Optional:** Only needed if the MUC requires a        |
-|                      | password                                               |
+|                      | password.                                              |
 +----------------------+--------------------------------------------------------+
 
-===================================
-Section: incoming_webhook_listeners
-===================================
+==================================
+Section: incoming_webhook_listener
+==================================
 
 .. code-block:: yaml
 
@@ -76,7 +76,7 @@ bidirectionally this is needed.
 Section: bridges
 ================
 
-.. clode-block:: yaml
+.. code-block:: yaml
 
     bridges:
       - xmpp_endpoints:

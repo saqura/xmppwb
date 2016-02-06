@@ -61,7 +61,7 @@ See also ``xmppwb --help``.
 Configuration
 =============
 
-Please see `CONFIGURATION.rst <https://github.com/saqura/xmppwb/blob/master/CONFIGURATION.rst>´_
+Please see `CONFIGURATION.rst <https://github.com/saqura/xmppwb/blob/master/CONFIGURATION.rst>`_
 for detailed documentation. A simple config file looks like this (the
 ``<placeholders>`` need to be changed):
 
@@ -105,7 +105,7 @@ Integrating with Rocket.Chat
 ============================
 
 An example config for bridging XMPP with `Rocket.Chat`_ is provided in
-`rocketchat.example.conf <https://github.com/saqura/xmppwb/blob/master/rocketchat.example.conf>´_.
+`rocketchat.example.conf <https://github.com/saqura/xmppwb/blob/master/rocketchat.example.conf>`_.
 It is recommended to copy it and fill out all ``<placeholders>``.
 
 1. To create the corresponding webhooks in RocketChat, go to
