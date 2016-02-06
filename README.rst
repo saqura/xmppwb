@@ -61,8 +61,9 @@ See also ``xmppwb --help``.
 Configuration
 =============
 
-A simple config file looks like this (the ``<placeholders>`` need to be
-changed):
+Please see `CONFIGURATION.rst <https://github.com/saqura/xmppwb/blob/master/CONFIGURATION.rst>´_
+for detailed documentation. A simple config file looks like this (the
+``<placeholders>`` need to be changed):
 
 .. code-block:: yaml
 
@@ -104,8 +105,8 @@ Integrating with Rocket.Chat
 ============================
 
 An example config for bridging XMPP with `Rocket.Chat`_ is provided in
-``rocketchat.example.conf``. It is recommended to copy it and fill out
-all ``<placeholders>``.
+`rocketchat.example.conf <https://github.com/saqura/xmppwb/blob/master/rocketchat.example.conf>´_.
+It is recommended to copy it and fill out all ``<placeholders>``.
 
 1. To create the corresponding webhooks in RocketChat, go to
    *Administration->Integrations* and create a new incoming webhook.
@@ -121,8 +122,6 @@ all ``<placeholders>``.
    ``<outgoing-webhook-token-from-rocketchat>`` placeholder.
 5. After having filled out all other placeholders, the bridge is ready to run
    (see `usage`_).
-
-
 
 
 .. _Rocket.Chat: https://rocket.chat/

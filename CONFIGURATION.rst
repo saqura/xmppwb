@@ -2,12 +2,26 @@
 Configuration Options
 *********************
 
-The following is a detailed overview of all available options. Refer to the
-example config files to see how these can be combined.
+The following is a detailed overview of all available options. The documentation
+of each section begins with a simple example. Refer to the example config files
+to see how these can be combined.
 
 =============
 Section: xmpp
 =============
+
+.. code-block:: yaml
+
+    xmpp:
+      jid: <alice@example.com>
+      password: "<bot-password>"
+      mucs:
+        - jid: <conference1@conference.example.com>
+          nickname: <nickname>
+          password: "<muc-password>"
+        - jid: <conference2@conference.example.com>
+          nickname: <nickname2>
+
 +----------------------+--------------------------------------------------------+
 | Name                 | Description                                            |
 +======================+========================================================+
@@ -36,6 +50,12 @@ Each entry in ``mucs`` has the following items:
 Section: incoming_webhook_listeners
 ===================================
 
+.. code-block:: yaml
+
+    incoming_webhook_listener:
+      bind_address: "127.0.0.1"
+      port: 5000
+
 The bridge can create a server to listen for incoming webhooks (HTTP POST
 requests). This section is **optional** and only needed if the bridge should
 handle incoming webhooks. For the typical use case of relaying messages
@@ -55,6 +75,18 @@ bidirectionally this is needed.
 ================
 Section: bridges
 ================
+
+.. clode-block:: yaml
+
+    bridges:
+      - xmpp_endpoints:
+          - muc: <conference1@conference.example.com>
+          - relay_all_normal: true
+        outgoing_webhooks:
+          - url: <incoming-webhook-url-from-other-end>
+            override_username: "{nick}"
+        incoming_webhooks:
+          - token: <outgoing-webhook-token-from-other-end>
 
 This section is a **list** of all available bridges. There can be one or
 multiple bridges. Each bridge consists of an **xmpp_endpoints** section, an
