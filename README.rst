@@ -128,7 +128,7 @@ It is recommended to copy it and fill out all ``<placeholders>``.
 Integrating with Mattermost
 ===========================
 
-An example config for bridging XMPP with `Matermost`_ is provided in
+An example config for bridging XMPP with `Mattermost`_ is provided in
 `mattermost.example.conf <https://github.com/saqura/xmppwb/blob/master/mattermost.example.conf>`_.
 It is recommended to copy it and fill out all ``<placeholders>``.
 
