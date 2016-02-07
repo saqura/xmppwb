@@ -124,5 +124,30 @@ It is recommended to copy it and fill out all ``<placeholders>``.
    (see `usage`_).
 
 
+===========================
+Integrating with Mattermost
+===========================
+
+An example config for bridging XMPP with `Matermost`_ is provided in
+`mattermost.example.conf <https://github.com/saqura/xmppwb/blob/master/mattermost.example.conf>`_.
+It is recommended to copy it and fill out all ``<placeholders>``.
+
+1. To create the corresponding webhooks in Mattermost, go to
+   *Account Settings->Integrations* and create a new incoming webhook.
+   Here you can select the channel that you want to bridge with.
+2. After saving, a webhook URL will be generated. Copy it and fill it into
+   the ``<incoming-webhook-url-from-mattermost>`` placeholder in the config
+   file.
+3. Now create an outgoing webhook. The callback URL is of the form
+   ``http://{bind_adress}:{port}/`` and depends on your settings in the
+   ``incoming_webhook_listener`` section. It defaults to
+   ``http://127.0.0.1:5000/``.
+4. After saving, copy the token and fill it into the
+   ``<outgoing-webhook-token-from-mattermost>`` placeholder.
+5. After having filled out all other placeholders, the bridge is ready to run
+   (see `usage`_).
+
+
+
 .. _Rocket.Chat: https://rocket.chat/
 .. _Mattermost: https://about.mattermost.com
