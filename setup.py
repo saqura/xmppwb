@@ -13,7 +13,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='xmppwb',
-    version='0.2.3',
+    version='0.2.4',
     description='XMPP Webhook Bridge',
     long_description=long_description,
 
