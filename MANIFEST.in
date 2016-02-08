@@ -1,5 +1,5 @@
 include LICENSE
-include example.conf
-include rocketchat.example.conf
-include mattermost.example.conf
+include conf/example.conf
+include conf/rocketchat.example.conf
+include conf/mattermost.example.conf
 include CONFIGURATION.rst

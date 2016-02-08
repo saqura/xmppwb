@@ -105,7 +105,7 @@ Integrating with Rocket.Chat
 ============================
 
 An example config for bridging XMPP with `Rocket.Chat`_ is provided in
-`rocketchat.example.conf <https://github.com/saqura/xmppwb/blob/master/rocketchat.example.conf>`_.
+`rocketchat.example.conf <https://github.com/saqura/xmppwb/blob/master/conf/rocketchat.example.conf>`_.
 It is recommended to copy it and fill out all ``<placeholders>``.
 
 1. To create the corresponding webhooks in RocketChat, go to
@@ -129,7 +129,7 @@ Integrating with Mattermost
 ===========================
 
 An example config for bridging XMPP with `Mattermost`_ is provided in
-`mattermost.example.conf <https://github.com/saqura/xmppwb/blob/master/mattermost.example.conf>`_.
+`mattermost.example.conf <https://github.com/saqura/xmppwb/blob/master/conf/mattermost.example.conf>`_.
 It is recommended to copy it and fill out all ``<placeholders>``.
 
 1. To create the corresponding webhooks in Mattermost, go to
@@ -151,3 +151,10 @@ It is recommended to copy it and fill out all ``<placeholders>``.
 
 .. _Rocket.Chat: https://rocket.chat/
 .. _Mattermost: https://about.mattermost.com
+
+=======
+License
+=======
+
+xmppwb is released under the MIT license. Please read
+`LICENSE <https://github.com/saqura/xmppwb/blob/master/LICENSE>`_ for details.

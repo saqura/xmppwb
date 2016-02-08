@@ -1,31 +1,22 @@
-#!/usr/bin/env python3
 """
-xmppwb - XMPP Webhook Bridge
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+xmppwb.bridge
+~~~~~~~~~~~~~
 
-A bot that bridges XMPP (chats and MUCs) with webhooks, thus making it
-possible to interact with services outside the XMPP world. This can be used to
-connect XMPP to other chat services that provide a webhook API to XMPP (for
-example Rocket.Chat, Mattermost or Slack).
+This module implements the main bridging functionality.
 
 :copyright: (c) 2016 by saqura.
 :license: MIT, see LICENSE for more details.
 """
-
-import argparse
-import asyncio
 import json
 import logging
-import os
-import sys
 from collections import defaultdict
 import aiohttp
 import aiohttp.web
-import yaml
-from slixmpp import ClientXMPP
+
+from xmppwb.xmpp import XMPPBridgeBot
 
 
-class XMPPWebhookBridge():
+class XMPPWebhookBridge:
     """This is the central component: It initializes and connects the
     :class:`XMPPBridgeBot` with the webhook handling part. The webhook part
     consists of an HTTP server listening for incoming webhooks (POST requests),
@@ -289,156 +280,6 @@ class XMPPWebhookBridge():
         logging.info("Disconnected from XMPP.")
 
 
-class XMPPBridgeBot(ClientXMPP):
-    """The XMPP part of the bridge. It is a bot that connects to all specified
-    MUCs, listens to incoming messages (from both MUCs and normal chats) and
-    sends messages.
-    """
-    def __init__(self, jid, password, main_bridge):
-        ClientXMPP.__init__(self, jid, password)
-
-        self.main_bridge = main_bridge
-
-        self.add_event_handler("session_start", self.session_started)
-        self.add_event_handler("message", self.message_received)
-        self.add_event_handler("connection_failed", self.connection_failed)
-        self.add_event_handler("failed_auth", self.auth_failed)
-
-        self.register_plugin('xep_0030')  # Service Discovery
-        self.register_plugin('xep_0045')  # Multi-User Chat
-        self.register_plugin('xep_0199')  # XMPP Ping
-
-    def session_started(self, event):
-        """This sets up the XMPP bot once successfully connected. It connects
-        to all specified MUCs.
-        """
-        self.send_presence()
-        self.get_roster()
-
-        for muc, nickname in self.main_bridge.mucs.items():
-            logging.debug("Joining MUC '{}' using nickname '{}'.".format(
-                                                                muc, nickname))
-            if muc in self.main_bridge.muc_passwords:
-                self.plugin['xep_0045'].joinMUC(
-                    muc,
-                    nickname,
-                    wait=True,
-                    password=self.main_bridge.muc_passwords[muc])
-            else:
-                self.plugin['xep_0045'].joinMUC(muc,
-                                                nickname,
-                                                wait=True)
-
-        logging.info("Connected to XMPP.")
-
-    async def message_received(self, msg):
-        """This coroutine is triggered whenever a message (both normal or from
-        a MUC) is received. It relays the message to the bridge.
-        """
-        from_jid = msg['from']
-        logging.debug("--> Received message from XMPP by {}: {}".format(
-                                                        from_jid, msg['body']))
-        if msg['type'] in ('chat', 'normal'):
-            out_webhooks = self.main_bridge.outgoing_mappings['all_normal']
-            for outgoing_webhook in out_webhooks:
-                await self.main_bridge.handle_outgoing(outgoing_webhook, msg)
-
-        elif msg['type'] == 'groupchat':
-            # TODO: Handle nickname of private message in MUCs.
-            if from_jid.resource == self.main_bridge.mucs[from_jid.bare]:
-                # Don't relay messages from ourselves.
-                return
-
-        else:
-            # Only handle normal chats and MUCs.
-            return
-
-        out_webhooks = self.main_bridge.outgoing_mappings[from_jid.bare]
-        for outgoing_webhook in out_webhooks:
-            await self.main_bridge.handle_outgoing(outgoing_webhook, msg)
-
-    async def connection_failed(self, error):
-        """This coroutine is triggered when the connection to the XMPP server
-        failed.
-        """
-        logging.error("Connection to XMPP failed.")
-
-    async def auth_failed(self, error):
-        """This coroutine is triggered when the XMPP server has rejected the
-        login credentials.
-        """
-        logging.error("Authetication with XMPP failed.")
-
-
 class InvalidConfigError(Exception):
     """Raised when the config file is invalid."""
     pass
-
-
-def main():
-    """Main entry point.
-
-    Gathers the command line arguments, reads the config and starts the bridge.
-    """
-    parser = argparse.ArgumentParser(
-        description="A bot that bridges XMPP (chats and MUCs) with webhooks, "
-        "thus making it possible to interact with services outside the XMPP "
-        "world.")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                        action="store_true")
-    parser.add_argument("-c", "--config", help="set the config file",
-                        required=True)
-    parser.add_argument("-l", "--logfile", help="enable logging to a file")
-    parser.add_argument("-d", "--debug", help="include debug output",
-                        action="store_true")
-    args = parser.parse_args()
-
-    loop = asyncio.get_event_loop()
-
-    log_config = {
-        'format': '%(asctime)s %(levelname)-8s %(message)s',
-        'datefmt': '%d-%H:%M:%S'
-    }
-
-    if args.verbose:
-        log_config['level'] = logging.DEBUG
-    else:
-        log_config['level'] = logging.INFO
-
-    if args.logfile:
-        log_config['filename'] = args.logfile
-
-    if args.debug:
-        loop.set_debug(True)
-
-    logging.getLogger('slixmpp').setLevel(logging.WARNING)
-    logging.getLogger('aiohttp').setLevel(logging.WARNING)
-    logging.basicConfig(**log_config)
-
-    config_filepath = os.path.abspath(args.config)
-    logging.info("Using config file {}".format(config_filepath))
-    try:
-        with open(config_filepath, 'r') as config_file:
-            cfg = yaml.load(config_file)
-    except FileNotFoundError:
-        logging.error("Config file not found. Exiting...")
-        sys.exit(1)
-
-    try:
-        bridge = XMPPWebhookBridge(cfg, loop)
-    except InvalidConfigError:
-        logging.exception("Invalid config file.")
-        sys.exit(1)
-
-    try:
-        bridge.process()
-    except KeyboardInterrupt:
-        print("Exiting... (keyboard interrupt)")
-    finally:
-        bridge.close()
-    loop.close()
-    logging.info("xmppwb exited.")
-
-
-if __name__ == '__main__':
-    main()
