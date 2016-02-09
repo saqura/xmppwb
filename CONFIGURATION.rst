@@ -178,6 +178,9 @@ Each entry in ``outgoing_webhooks`` has the following items:
 | **formatting: true**   | *attachment formatting*. This is the preferred way   |
 |                        | of integrating with RocketChat.                      |
 +------------------------+------------------------------------------------------+
+| **attachment_link:**   | **Optional:** When using *attachment formatting*,    |
+| **<string>**           | each message can include a link.                     |
++------------------------+------------------------------------------------------+
 
 -----------------------------------------
 The incoming_webhooks section of a bridge

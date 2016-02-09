@@ -112,8 +112,8 @@ class XMPPWebhookBridge:
                 msg=message)
 
         payload = {
-            "text": message,
-            "username": username
+            'text': message,
+            'username': username
         }
 
         if 'override_channel' in outgoing_webhook:
@@ -122,13 +122,15 @@ class XMPPWebhookBridge:
         # Attachment formatting is useful for integrating with RocketChat.
         if ('use_attachment_formatting' in outgoing_webhook and
                 outgoing_webhook['use_attachment_formatting']):
+            payload_attachment = {
+                'title': "From: {}".format(username),
+                'text': message
+            }
+            if 'attachment_link' in outgoing_webhook:
+                payload_attachment['title_link'] = \
+                                            outgoing_webhook['attachment_link']
             payload = {
-                "attachments": [{
-                    "title": "From: {}".format(username),
-                    # TODO: Add an option to change the link.
-                    # "title_link": "https://xmpp.org",
-                    "text": message
-                }]
+                'attachments': [payload_attachment]
             }
 
         logging.debug("<-- Sending outgoing webhook. (from '{}')".format(
@@ -143,7 +145,7 @@ class XMPPWebhookBridge:
     async def handle_incoming(self, request):
         """This coroutine handles incoming webhooks: It receives incoming
         webhooks and relays the messages to XMPP."""
-        if request.content_type == "application/json":
+        if request.content_type == 'application/json':
             payload = await request.json()
             # print(payload)
         else:
@@ -162,13 +164,13 @@ class XMPPWebhookBridge:
             logging.debug("<-- Sending a normal chat message to XMPP.")
             self.xmpp_client.send_message(mto=xmpp_normal_jid,
                                           mbody=msg,
-                                          mtype="chat",
+                                          mtype='chat',
                                           mnick=payload['user_name'])
         for xmpp_muc_jid in self.incoming_muc_mappings[token]:
             logging.debug("<-- Sending a MUC chat message to XMPP.")
             self.xmpp_client.send_message(mto=xmpp_muc_jid,
                                           mbody=msg,
-                                          mtype="groupchat",
+                                          mtype='groupchat',
                                           mnick=payload['user_name'])
         return aiohttp.web.Response()
 
