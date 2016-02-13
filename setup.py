@@ -30,7 +30,7 @@ setup(
         'Topic :: Communications :: Chat',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3 :: Only'
+        'Programming Language :: Python :: 3 :: Only',
         'Programming Language :: Python :: 3.5',
     ],
     keywords=['jabber', 'xmpp', 'bridge', 'bot', 'webhook', 'webhooks'],
