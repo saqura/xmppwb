@@ -34,11 +34,13 @@ class XMPPWebhookBridge:
         self.muc_passwords = dict()
 
         try:
-            # Get the MUCs from the config:
+            # Get the optional XMPP address (host, port) if specified
+            xmpp_address = tuple()
+            if ('host' in cfg['xmpp']):
+                xmpp_address = (cfg['xmpp']['host'], cfg['xmpp']['port'])
+
             self.get_mucs(cfg)
-            # Get the outgoing bridge mappings from the config:
             self.get_outgoing_mappings(cfg)
-            # Get the incoming bridge mappings from the config:
             self.get_incoming_mappings(cfg)
         except KeyError:
             raise InvalidConfigError
@@ -51,7 +53,7 @@ class XMPPWebhookBridge:
         self.xmpp_client = XMPPBridgeBot(cfg['xmpp']['jid'],
                                          cfg['xmpp']['password'],
                                          self)
-        self.xmpp_client.connect()
+        self.xmpp_client.connect(address=xmpp_address)
 
         # Initialize HTTP server if needed
         incoming_webhooks_count = (len(self.incoming_muc_mappings) +
