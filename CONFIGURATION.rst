@@ -27,6 +27,15 @@ Section: xmpp
 +======================+========================================================+
 | **jid**              | The Jabber-ID the bot uses (must exist).               |
 +----------------------+--------------------------------------------------------+
+| **host**             | **Optional:** The hostname of the XMPP server. This is |
+|                      | only needed if the DNS entries of the XMPP server are  |
+|                      | not set correctly.                                     |
+|                      |                                                        |
+|                      | If specified, the port must also be set.               |
++----------------------+--------------------------------------------------------+
+| **port**             | **Optional:** The port of the XMPP server. If          |
+|                      | specified, the hostname must also be set (see above).  |
++----------------------+--------------------------------------------------------+
 | **password**         | The corresponding password.                            |
 +----------------------+--------------------------------------------------------+
 | **mucs**             | A **list** of all MUCs that should be available to the |
@@ -173,7 +182,7 @@ Each entry in ``outgoing_webhooks`` has the following items:
 |                        |                                                      |
 |                        | - ``{msg}``: The original message as received from   |
 |                        |   XMPP.                                              |
-+------------------------+------------------------------------------------------+  
++------------------------+------------------------------------------------------+
 | **use_attachment_**    | **Optional:** The message can be sent using          |
 | **formatting: true**   | *attachment formatting*. This is the preferred way   |
 |                        | of integrating with RocketChat.                      |
