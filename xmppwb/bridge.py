@@ -9,6 +9,8 @@ This module implements the main bridging functionality.
 """
 import json
 import logging
+import os
+import ssl
 from collections import defaultdict
 import aiohttp
 import aiohttp.web
@@ -26,7 +28,6 @@ class XMPPWebhookBridge:
         self.loop = loop
         self.incoming_normal_mappings = defaultdict(set)
         self.incoming_muc_mappings = defaultdict(set)
-        # TODO: Refactor to use frozendict+sets instead of lists.
         self.outgoing_mappings = defaultdict(list)
         # Mapping of MUC-JID -> Nickname
         self.mucs = dict()
@@ -36,7 +37,7 @@ class XMPPWebhookBridge:
         try:
             # Get the optional XMPP address (host, port) if specified
             xmpp_address = tuple()
-            if ('host' in cfg['xmpp']):
+            if 'host' in cfg['xmpp']:
                 xmpp_address = (cfg['xmpp']['host'], cfg['xmpp']['port'])
 
             self.get_mucs(cfg)
@@ -44,10 +45,6 @@ class XMPPWebhookBridge:
             self.get_incoming_mappings(cfg)
         except KeyError:
             raise InvalidConfigError
-
-        # Initialize HTTP client
-        # TODO: Handle ConnectionRefusedError.
-        self.http_client = aiohttp.ClientSession(loop=loop)
 
         # Initialize XMPP client
         self.xmpp_client = XMPPBridgeBot(cfg['xmpp']['jid'],
@@ -137,7 +134,7 @@ class XMPPWebhookBridge:
 
         logging.debug("<-- Sending outgoing webhook. (from '{}')".format(
                                                             from_jid))
-        request = await self.http_client.post(
+        request = await outgoing_webhook['session'].post(
             outgoing_webhook['url'],
             data=json.dumps(payload),
             headers={'content-type': 'application/json'})
@@ -186,7 +183,9 @@ class XMPPWebhookBridge:
                 self.muc_passwords[jid] = muc['password']
 
     def get_outgoing_mappings(self, cfg):
-        """Reads the outgoing webhook definitions from the config file."""
+        """Reads the outgoing webhook definitions from the config file.
+
+        This also sets up the HTTP client session for each webhook."""
         bridges = cfg['bridges']
         for bridge in bridges:
             if 'outgoing_webhooks' not in bridge:
@@ -211,18 +210,25 @@ class XMPPWebhookBridge:
                                              "'url' is missing from an "
                                              "outgoing webhook definition.")
 
+                # Set up SSL context for certificate pinning.
+                if 'cafile' in outgoing_webhook:
+                    cafile = os.path.abspath(outgoing_webhook['cafile'])
+                    sslcontext = ssl.create_default_context(cafile=cafile)
+                    conn = aiohttp.TCPConnector(ssl_context=sslcontext)
+                    session = aiohttp.ClientSession(loop=self.loop, connector=conn)
+                else:
+                    session = aiohttp.ClientSession(loop=self.loop)
+                # TODO: Handle ConnectionRefusedError.
+                outgoing_webhook['session'] = session
+
                 if relay_all_normal:
                     self.outgoing_mappings['all_normal'].append(
                                                 outgoing_webhook)
 
                 for xmpp_endpoint in xmpp_endpoints:
-                    if 'relay_all_normal' in xmpp_endpoint:
-                        # This case was already handled above.
-                        continue
-
                     # Determine whether the JID corresponds to a MUC or a
                     # normal chat:
-                    elif 'muc' in xmpp_endpoint:
+                    if 'muc' in xmpp_endpoint:
                         if xmpp_endpoint['muc'] not in self.mucs:
                             raise InvalidConfigError(
                                 "Error in config file: XMPP MUC '{}' was not "
@@ -276,9 +282,11 @@ class XMPPWebhookBridge:
             self.loop.run_until_complete(self.http_app.finish())
             logging.info("Closed HTTP server..")
 
-        logging.info("Closing HTTP client session...")
-        self.http_client.close()
-        logging.info("Closed HTTP client session..")
+        logging.info("Closing HTTP client sessions...")
+        for outgoing_mapping in self.outgoing_mappings.values():
+            for webhook in outgoing_mapping:
+                webhook['session'].close()
+        logging.info("Closed HTTP client sessions..")
         logging.info("Disconnecting from XMPP...")
         self.xmpp_client.disconnect()
         logging.info("Disconnected from XMPP.")

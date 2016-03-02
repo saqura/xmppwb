@@ -27,6 +27,11 @@ Section: xmpp
 +======================+========================================================+
 | **jid**              | The Jabber-ID the bot uses (must exist).               |
 +----------------------+--------------------------------------------------------+
+| **password**         | The corresponding password.                            |
++----------------------+--------------------------------------------------------+
+| **mucs**             | A **list** of all MUCs that should be available to the |
+|                      | bridges defined later.                                 |
++----------------------+--------------------------------------------------------+
 | **host**             | **Optional:** The hostname of the XMPP server. This is |
 |                      | only needed if the DNS entries of the XMPP server are  |
 |                      | not set correctly.                                     |
@@ -35,11 +40,6 @@ Section: xmpp
 +----------------------+--------------------------------------------------------+
 | **port**             | **Optional:** The port of the XMPP server. If          |
 |                      | specified, the hostname must also be set (see above).  |
-+----------------------+--------------------------------------------------------+
-| **password**         | The corresponding password.                            |
-+----------------------+--------------------------------------------------------+
-| **mucs**             | A **list** of all MUCs that should be available to the |
-|                      | bridges defined later.                                 |
 +----------------------+--------------------------------------------------------+
 
 Each entry in ``mucs`` has the following items:
@@ -147,6 +147,12 @@ Each entry in ``outgoing_webhooks`` has the following items:
 | Name                   | Description                                          |
 +========================+======================================================+
 | **url: <url>**         | The URL of the webhook that should be triggered.     |
++------------------------+------------------------------------------------------+
+| **cafile: <cafile>**   | **Optional:** The full certificate chain used for    |
+|                        | validating the other end. This certificate chain     |
+|                        | should be in "PEM" format.                           |
+|                        |                                                      |
+|                        | See: https://docs.python.org/3/library/ssl.html#ca-certificates |
 +------------------------+------------------------------------------------------+
 | **override_username:** | **Optional:** The username that is sent as part of   |
 | **<string>**           | the outgoing webhook can be overridden with this     |
