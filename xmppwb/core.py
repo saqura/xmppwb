@@ -2,7 +2,7 @@
 xmppwb.core
 ~~~~~~~~~~~
 
-This module is mainly used an entrypoint to set everything up.
+This module is mainly used as an entrypoint to set everything up.
 
 :copyright: (c) 2016 by saqura.
 :license: MIT, see LICENSE for more details.
