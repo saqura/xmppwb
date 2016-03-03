@@ -150,9 +150,7 @@ Each entry in ``outgoing_webhooks`` has the following items:
 +------------------------+------------------------------------------------------+
 | **cafile: <cafile>**   | **Optional:** The full certificate chain used for    |
 |                        | validating the other end. This certificate chain     |
-|                        | should be in "PEM" format.                           |
-|                        |                                                      |
-|                        | See: https://docs.python.org/3/library/ssl.html#ca-certificates |
+|                        | should be in "PEM" format [#]_.                      |
 +------------------------+------------------------------------------------------+
 | **override_username:** | **Optional:** The username that is sent as part of   |
 | **<string>**           | the outgoing webhook can be overridden with this     |
@@ -196,6 +194,8 @@ Each entry in ``outgoing_webhooks`` has the following items:
 | **attachment_link:**   | **Optional:** When using *attachment formatting*,    |
 | **<string>**           | each message can include a link.                     |
 +------------------------+------------------------------------------------------+
+
+.. [#] See: https://docs.python.org/3/library/ssl.html#ca-certificates
 
 -----------------------------------------
 The incoming_webhooks section of a bridge
