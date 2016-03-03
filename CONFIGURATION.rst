@@ -148,9 +148,9 @@ Each entry in ``outgoing_webhooks`` has the following items:
 +========================+======================================================+
 | **url: <url>**         | The URL of the webhook that should be triggered.     |
 +------------------------+------------------------------------------------------+
-| **cafile: <cafile>**   | **Optional:** The full certificate chain used for    |
-|                        | validating the other end. This certificate chain     |
-|                        | should be in "PEM" format [#]_.                      |
+| **cafile: <cafile>**   | **Optional:** The path to the full certificate chain |
+|                        | used for validating the other end. This certificate  |
+|                        | chain should be in "PEM" format [#]_.                |
 +------------------------+------------------------------------------------------+
 | **override_username:** | **Optional:** The username that is sent as part of   |
 | **<string>**           | the outgoing webhook can be overridden with this     |
