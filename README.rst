@@ -18,6 +18,8 @@ XMPP to other chat services that provide a webhook API (for example
 Installation
 ============
 
+**Note: Python 3.5 is required. It will not work with Python 3.4 as xmppwb uses specific syntax that was introduced with Python 3.5.**
+
 ``xmppwb`` requires *Python 3.5+* and can be installed using pip3:
 
 .. code-block:: bash
