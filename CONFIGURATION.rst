@@ -166,7 +166,7 @@ Each entry in ``outgoing_webhooks`` has the following items:
 |                        |                                                      |
 |                        |   Example: ``bob@example.com/Resource``              |
 |                        |                                                      |
-|                        | - ``local_jid``: The local part of the JID whose     |
+|                        | - ``{local_jid}``: The local part of the JID whose   |
 |                        |   message is relayed.                                |
 |                        |                                                      |
 |                        |   Example: If the JID is ``bob@example.com`` the     |
