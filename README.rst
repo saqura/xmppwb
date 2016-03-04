@@ -55,7 +55,7 @@ Synopsis:
 
 .. code-block:: bash
 
-    $ xmppwb [-h] [-v] -c CONFIG [-l LOGFILE] [-d]
+    $ xmppwb -c CONFIG [-h] [-v] [-l LOGFILE] [-d] [--version]
 
 See also ``xmppwb --help``.
 
