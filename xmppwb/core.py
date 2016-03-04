@@ -15,6 +15,7 @@ import sys
 import yaml
 
 from xmppwb.bridge import XMPPWebhookBridge, InvalidConfigError
+from xmppwb import __version__
 
 
 def main():
@@ -26,13 +27,15 @@ def main():
         description="A bot that bridges XMPP (chats and MUCs) with webhooks, "
         "thus making it possible to interact with services outside the XMPP "
         "world.")
-    parser.add_argument("-v", "--verbose", help="increase output verbosity",
-                        action="store_true")
     parser.add_argument("-c", "--config", help="set the config file",
                         required=True)
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
     parser.add_argument("-l", "--logfile", help="enable logging to a file")
     parser.add_argument("-d", "--debug", help="include debug output",
                         action="store_true")
+    parser.add_argument("--version", help="show version and exit",
+                        action="version", version=__version__)
     args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
@@ -42,6 +45,10 @@ def main():
         'datefmt': '%d-%H:%M:%S'
     }
 
+    if args.debug:
+        loop.set_debug(True)
+        args.verbose = True
+
     if args.verbose:
         log_config['level'] = logging.DEBUG
     else:
@@ -50,14 +57,13 @@ def main():
     if args.logfile:
         log_config['filename'] = args.logfile
 
-    if args.debug:
-        loop.set_debug(True)
 
     logging.getLogger('slixmpp').setLevel(logging.WARNING)
     logging.getLogger('aiohttp').setLevel(logging.WARNING)
     # logger = logging.getLogger('xmppwb')
     logging.basicConfig(**log_config)
 
+    logging.info("Starting xmppwb version {}".format(__version__))
     config_filepath = os.path.abspath(args.config)
     logging.info("Using config file {}".format(config_filepath))
     try:

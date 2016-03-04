@@ -5,23 +5,25 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
+# Get the version
+with open(path.join(here, 'xmppwb', 'version.py')) as f:
+    vf = {}
+    exec(f.read(), vf)
+    version = vf['__version__']
+
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
     name='xmppwb',
-    version='0.2.6',
+    version=version,
     description='XMPP Webhook Bridge',
     long_description=long_description,
-
     url='https://github.com/saqura/xmppwb',
-
     author='saqura',
     author_email='saqura@saqura.xyz',
-
     license='MIT',
-
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 3 - Alpha',

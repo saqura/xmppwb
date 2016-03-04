@@ -10,3 +10,5 @@ example Rocket.Chat, Mattermost or Slack).
 :copyright: (c) 2016 by saqura.
 :license: MIT, see LICENSE for more details.
 """
+
+from xmppwb.version import __version__
