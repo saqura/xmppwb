@@ -84,7 +84,6 @@ for detailed documentation. A simple config file looks like this (the
     bridges:
       - xmpp_endpoints:
           - muc: <conference1@conference.example.com>
-          - relay_all_normal: true
         outgoing_webhooks:
           - url: <incoming-webhook-url-from-other-end>
             override_username: "{nick}"

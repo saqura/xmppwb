@@ -195,8 +195,8 @@ class XMPPWebhookBridge:
             outgoing_webhooks = bridge['outgoing_webhooks']
             xmpp_endpoints = bridge['xmpp_endpoints']
 
-            # Check whether all normal messages to this bridge should be
-            # relayed.
+            # Check whether all normal (non-group) messages to this bridge
+            # should be relayed.
             relay_all_normal = False
             for xmpp_endpoint in xmpp_endpoints:
                 if ('relay_all_normal' in xmpp_endpoint and
@@ -215,7 +215,8 @@ class XMPPWebhookBridge:
                     cafile = os.path.abspath(outgoing_webhook['cafile'])
                     sslcontext = ssl.create_default_context(cafile=cafile)
                     conn = aiohttp.TCPConnector(ssl_context=sslcontext)
-                    session = aiohttp.ClientSession(loop=self.loop, connector=conn)
+                    session = aiohttp.ClientSession(loop=self.loop,
+                                                    connector=conn)
                 else:
                     session = aiohttp.ClientSession(loop=self.loop)
                 # TODO: Handle ConnectionRefusedError.

@@ -90,7 +90,6 @@ Section: bridges
     bridges:
       - xmpp_endpoints:
           - muc: <conference1@conference.example.com>
-          - relay_all_normal: true
         outgoing_webhooks:
           - url: <incoming-webhook-url-from-other-end>
             override_username: "{nick}"
@@ -122,11 +121,11 @@ Each entry in ``xmpp_endpoints`` is **one of the following**:
 | **normal: <JID>**     | This is used if a normal JID should be part of this   |
 |                       | bridge.                                               |
 +-----------------------+-------------------------------------------------------+
-| **relay_all_normal:** | **Optional:** The bridge can also relay all messages  |
-| **true**              | received from normal JIDs. Note that this will only   |
-|                       | trigger outgoing webhooks. Incoming webhooks can only |
-|                       | affect MUCs and normal JIDs that are explicitly       |
-|                       | defined.                                              |
+| **relay_all_normal:** | **Optional:** The bridge can also relay *all*         |
+| **true**              | messages received from normal JIDs (i.e. JIDs that    |
+|                       | are not MUC JIDs). Note that this will only trigger   |
+|                       | outgoing webhooks. Incoming webhooks can only affect  |
+|                       | MUCs and normal JIDs that are explicitly defined.     |
 +-----------------------+-------------------------------------------------------+
 
 -----------------------------------------
