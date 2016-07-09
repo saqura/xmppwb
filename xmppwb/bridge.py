@@ -11,7 +11,6 @@ import json
 import logging
 import os
 import ssl
-from collections import defaultdict
 import aiohttp
 import aiohttp.web
 
@@ -26,9 +25,8 @@ class XMPPWebhookBridge:
     """
     def __init__(self, cfg, loop):
         self.loop = loop
-        self.incoming_normal_mappings = defaultdict(set)
-        self.incoming_muc_mappings = defaultdict(set)
-        self.outgoing_mappings = defaultdict(list)
+        # List of bridges
+        self.bridges = list()
         # Mapping of MUC-JID -> Nickname
         self.mucs = dict()
         # Mapping of MUC-JID -> Password
@@ -41,10 +39,16 @@ class XMPPWebhookBridge:
                 xmpp_address = (cfg['xmpp']['host'], cfg['xmpp']['port'])
 
             self.get_mucs(cfg)
-            self.get_outgoing_mappings(cfg)
-            self.get_incoming_mappings(cfg)
         except KeyError:
             raise InvalidConfigError
+
+        # Parse the bridges from the config file
+        need_incoming_webhooks = False
+        for bridge_cfg in cfg['bridges']:
+            bridge = SingleBridge(bridge_cfg, self)
+            self.bridges.append(bridge)
+            if bridge.has_incoming_webhooks():
+                need_incoming_webhooks = True
 
         # Initialize XMPP client
         self.xmpp_client = XMPPBridgeBot(cfg['xmpp']['jid'],
@@ -53,16 +57,16 @@ class XMPPWebhookBridge:
         self.xmpp_client.connect(address=xmpp_address)
 
         # Initialize HTTP server if needed
-        incoming_webhooks_count = (len(self.incoming_muc_mappings) +
-                                   len(self.incoming_normal_mappings))
-        if incoming_webhooks_count == 0:
+        if not need_incoming_webhooks:
             self.http_server = None
             logging.info("No incoming webhooks defined.")
         elif 'incoming_webhook_listener' in cfg:
             bind_address = cfg['incoming_webhook_listener']['bind_address']
             port = cfg['incoming_webhook_listener']['port']
             self.http_app = aiohttp.web.Application(loop=loop)
-            self.http_app.router.add_route('POST', '/', self.handle_incoming)
+            self.http_app.router.add_route('POST',
+                                           '/',
+                                           self.handle_incoming_webhook)
             self.http_handler = self.http_app.make_handler()
             http_create_server = loop.create_server(
                 self.http_handler,
@@ -83,7 +87,7 @@ class XMPPWebhookBridge:
     def process(self):
         self.loop.run_forever()
 
-    async def handle_outgoing(self, outgoing_webhook, msg):
+    async def send_outgoing_webhook(self, outgoing_webhook, msg):
         """This coroutine handles outgoing webhooks: It relays the messages
         received from XMPP and triggers external webhooks.
         """
@@ -141,7 +145,7 @@ class XMPPWebhookBridge:
         await request.release()
         return
 
-    async def handle_incoming(self, request):
+    async def handle_incoming_webhook(self, request):
         """This coroutine handles incoming webhooks: It receives incoming
         webhooks and relays the messages to XMPP."""
         if request.content_type == 'application/json':
@@ -158,19 +162,12 @@ class XMPPWebhookBridge:
         token = payload['token']
         logging.debug("--> Handling incoming request from token "
                       "'{}'...".format(token))
-        msg = payload['user_name'] + ": " + payload['text']
-        for xmpp_normal_jid in self.incoming_normal_mappings[token]:
-            logging.debug("<-- Sending a normal chat message to XMPP.")
-            self.xmpp_client.send_message(mto=xmpp_normal_jid,
-                                          mbody=msg,
-                                          mtype='chat',
-                                          mnick=payload['user_name'])
-        for xmpp_muc_jid in self.incoming_muc_mappings[token]:
-            logging.debug("<-- Sending a MUC chat message to XMPP.")
-            self.xmpp_client.send_message(mto=xmpp_muc_jid,
-                                          mbody=msg,
-                                          mtype='groupchat',
-                                          mnick=payload['user_name'])
+        username = payload['user_name']
+        msg = payload['text']
+
+        for bridge in self.bridges:
+            bridge.handle_incoming_webhook(token, username, msg)
+
         return aiohttp.web.Response()
 
     def get_mucs(self, cfg):
@@ -181,94 +178,6 @@ class XMPPWebhookBridge:
             self.mucs[jid] = nickname
             if 'password' in muc:
                 self.muc_passwords[jid] = muc['password']
-
-    def get_outgoing_mappings(self, cfg):
-        """Reads the outgoing webhook definitions from the config file.
-
-        This also sets up the HTTP client session for each webhook."""
-        bridges = cfg['bridges']
-        for bridge in bridges:
-            if 'outgoing_webhooks' not in bridge:
-                # No outgoing webhooks in this bridge.
-                continue
-
-            outgoing_webhooks = bridge['outgoing_webhooks']
-            xmpp_endpoints = bridge['xmpp_endpoints']
-
-            # Check whether all normal (non-group) messages to this bridge
-            # should be relayed.
-            relay_all_normal = False
-            for xmpp_endpoint in xmpp_endpoints:
-                if ('relay_all_normal' in xmpp_endpoint and
-                        xmpp_endpoint['relay_all_normal'] is True):
-                    relay_all_normal = True
-                    break
-
-            for outgoing_webhook in outgoing_webhooks:
-                if 'url' not in outgoing_webhook:
-                    raise InvalidConfigError("Error in config file: "
-                                             "'url' is missing from an "
-                                             "outgoing webhook definition.")
-
-                # Set up SSL context for certificate pinning.
-                if 'cafile' in outgoing_webhook:
-                    cafile = os.path.abspath(outgoing_webhook['cafile'])
-                    sslcontext = ssl.create_default_context(cafile=cafile)
-                    conn = aiohttp.TCPConnector(ssl_context=sslcontext)
-                    session = aiohttp.ClientSession(loop=self.loop,
-                                                    connector=conn)
-                else:
-                    session = aiohttp.ClientSession(loop=self.loop)
-                # TODO: Handle ConnectionRefusedError.
-                outgoing_webhook['session'] = session
-
-                if relay_all_normal:
-                    self.outgoing_mappings['all_normal'].append(
-                                                outgoing_webhook)
-
-                for xmpp_endpoint in xmpp_endpoints:
-                    # Determine whether the JID corresponds to a MUC or a
-                    # normal chat:
-                    if 'muc' in xmpp_endpoint:
-                        if xmpp_endpoint['muc'] not in self.mucs:
-                            raise InvalidConfigError(
-                                "Error in config file: XMPP MUC '{}' was not "
-                                "defined in the xmpp.mucs section.".format(
-                                    xmpp_endpoint['muc']))
-
-                        self.outgoing_mappings[xmpp_endpoint['muc']].append(
-                                                            outgoing_webhook)
-                    elif 'normal' in xmpp_endpoint:
-                        if relay_all_normal:
-                            # Don't add normal JIDs when all normal messages
-                            # are relayed anyways.
-                            continue
-                        self.outgoing_mappings[xmpp_endpoint['normal']].append(
-                                                            outgoing_webhook)
-
-    def get_incoming_mappings(self, cfg):
-        """Reads the incoming webhook definitions from the config file."""
-        bridges = cfg['bridges']
-        for bridge in bridges:
-            if 'incoming_webhooks' not in bridge:
-                # No incoming webhooks in this bridge.
-                continue
-
-            incoming_webhooks = bridge['incoming_webhooks']
-            xmpp_endpoints = bridge['xmpp_endpoints']
-            for incoming_webhook in incoming_webhooks:
-                if 'token' not in incoming_webhook:
-                    raise InvalidConfigError("Invalid config file: "
-                                             "'token' missing from outgoing "
-                                             "webhook definition.")
-                token = incoming_webhook['token']
-                for xmpp_endpoint in xmpp_endpoints:
-                    if 'muc' in xmpp_endpoint:
-                        self.incoming_muc_mappings[token].add(
-                                                xmpp_endpoint['muc'])
-                    elif 'normal' in xmpp_endpoint:
-                        self.incoming_normal_mappings[token].add(
-                                                xmpp_endpoint['normal'])
 
     def close(self):
         """Closes all open connections, servers and handlers. This is used
@@ -284,8 +193,8 @@ class XMPPWebhookBridge:
             logging.info("Closed HTTP server..")
 
         logging.info("Closing HTTP client sessions...")
-        for outgoing_mapping in self.outgoing_mappings.values():
-            for webhook in outgoing_mapping:
+        for bridge in self.bridges:
+            for webhook in bridge.outgoing_webhooks:
                 webhook['session'].close()
         logging.info("Closed HTTP client sessions..")
         logging.info("Disconnecting from XMPP...")
@@ -296,3 +205,163 @@ class XMPPWebhookBridge:
 class InvalidConfigError(Exception):
     """Raised when the config file is invalid."""
     pass
+
+
+class SingleBridge:
+    def __init__(self, bridge_cfg, main_bridge):
+        """Parses a bridge section of the config file and creates a new
+        bridge.
+        """
+        self.main_bridge = main_bridge
+        self.xmpp_muc_endpoints = list()
+        self.xmpp_normal_endpoints = list()
+        self.xmpp_relay_all_normal = False
+
+        # List of tokens of incoming webhooks for this bridge
+        self.incoming_webhooks = list()
+
+        self.outgoing_webhooks = list()
+
+        self._parse_xmpp_endpoints(bridge_cfg)
+        self._parse_incoming_webhooks(bridge_cfg)
+        self._parse_outgoing_webhooks(bridge_cfg)
+
+    def has_incoming_webhooks(self):
+        """Returns True if this bridge contains incoming webhooks."""
+        return (len(self.incoming_webhooks) != 0)
+
+    def handle_incoming_webhook(self, token, username, msg):
+        """Handles an incoming webhook with the given token, username
+        and message.
+        """
+        if token not in self.incoming_webhooks:
+            # This webhook is not handled by this bridge.
+            return
+
+        msg = "{}: {}".format(username, msg)
+        for xmpp_normal_jid in self.xmpp_normal_endpoints:
+            logging.debug("<-- Sending a normal chat message to XMPP.")
+            self.main_bridge.xmpp_client.send_message(
+                mto=xmpp_normal_jid,
+                mbody=msg,
+                mtype='chat',
+                mnick=username)
+
+        for xmpp_muc_jid in self.xmpp_muc_endpoints:
+            logging.debug("<-- Sending a MUC chat message to XMPP.")
+            self.main_bridge.xmpp_client.send_message(
+                mto=xmpp_muc_jid,
+                mbody=msg,
+                mtype='groupchat',
+                mnick=username)
+
+    async def handle_incoming_xmpp(self, msg):
+        """Handles an incoming XMPP message, from either a normal chat or
+        a MUC."""
+        out_webhooks = list()
+        from_jid = msg['from']
+
+        if msg['type'] in ('chat', 'normal'):
+            if self.xmpp_relay_all_normal:
+                out_webhooks = self.outgoing_webhooks
+            elif from_jid.bare in self.xmpp_normal_endpoints:
+                out_webhooks = self.outgoing_webhooks
+
+        elif msg['type'] == 'groupchat':
+            # TODO: Handle nickname of private message in MUCs.
+            if from_jid.resource == self.main_bridge.mucs[from_jid.bare]:
+                # Don't relay messages from ourselves.
+                return
+            elif from_jid.bare in self.xmpp_muc_endpoints:
+                out_webhooks = self.outgoing_webhooks
+
+        else:
+            # Only handle normal chats and MUCs.
+            return
+
+        # Forward the messages to the outgoing webhooks
+        for outgoing_webhook in out_webhooks:
+            await self.main_bridge.send_outgoing_webhook(outgoing_webhook, msg)
+
+    def _parse_incoming_webhooks(self, bridge_cfg):
+        """Parses the `incoming_webhooks` from this bridge's config file
+        section."""
+        if 'incoming_webhooks' not in bridge_cfg:
+            # No incoming webhooks in this bridge.
+            return
+
+        incoming_webhooks = bridge_cfg['incoming_webhooks']
+        for incoming_webhook in incoming_webhooks:
+            if 'token' not in incoming_webhook:
+                raise InvalidConfigError("Invalid config file: "
+                                         "'token' missing from outgoing "
+                                         "webhook definition.")
+            token = incoming_webhook['token']
+            self.incoming_webhooks.append(token)
+
+    def _parse_outgoing_webhooks(self, bridge_cfg):
+        """Parses the `outgoing webhooks` from this bridge's config file
+        section.
+
+        This also sets up the HTTP client session for each webhook."""
+        if 'outgoing_webhooks' not in bridge_cfg:
+            # No outgoing webhooks in this bridge.
+            return
+
+        outgoing_webhooks = bridge_cfg['outgoing_webhooks']
+
+        for outgoing_webhook in outgoing_webhooks:
+            if 'url' not in outgoing_webhook:
+                raise InvalidConfigError("Error in config file: "
+                                         "'url' is missing from an "
+                                         "outgoing webhook definition.")
+
+            # Set up SSL context for certificate pinning.
+            if 'cafile' in outgoing_webhook:
+                cafile = os.path.abspath(outgoing_webhook['cafile'])
+                sslcontext = ssl.create_default_context(cafile=cafile)
+                conn = aiohttp.TCPConnector(ssl_context=sslcontext)
+                session = aiohttp.ClientSession(loop=self.main_bridge.loop,
+                                                connector=conn)
+            else:
+                session = aiohttp.ClientSession(loop=self.main_bridge.loop)
+            # TODO: Handle ConnectionRefusedError.
+            outgoing_webhook['session'] = session
+
+            self.outgoing_webhooks.append(outgoing_webhook)
+
+    def _parse_xmpp_endpoints(self, bridge_cfg):
+        """Parses the `xmpp_endpoints` from this bridge's config file
+        section."""
+        if 'xmpp_endpoints' not in bridge_cfg:
+            raise InvalidConfigError("Error in config file: "
+                                     "'xmpp_endpoints' section is missing "
+                                     "from a bridge definition.")
+
+        xmpp_endpoints = bridge_cfg['xmpp_endpoints']
+        for xmpp_endpoint in xmpp_endpoints:
+            # Determine whether the JID corresponds to a MUC or a
+            # normal chat:
+            if 'muc' in xmpp_endpoint:
+                muc_endpoint = xmpp_endpoint['muc']
+                if muc_endpoint not in self.main_bridge.mucs:
+                    raise InvalidConfigError(
+                        "Error in config file: XMPP MUC '{}' was not "
+                        "defined in the xmpp.mucs section.".format(
+                            muc_endpoint))
+                self.xmpp_muc_endpoints.append(muc_endpoint)
+
+            elif 'normal' in xmpp_endpoint:
+                normal_endpoint = xmpp_endpoint['normal']
+                self.xmpp_normal_endpoints.append(normal_endpoint)
+
+            elif 'relay_all_normal' in xmpp_endpoint:
+                if xmpp_endpoint['relay_all_normal'] is True:
+                    self.xmpp_relay_all_normal = True
+
+            else:
+                raise InvalidConfigError("Error in config file: "
+                                         "'xmpp_endpoints' section contains "
+                                         "invalid entry. Must be either of "
+                                         "type 'muc', 'normal' or "
+                                         "'relay_all_normal'.")

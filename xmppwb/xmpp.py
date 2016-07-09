@@ -57,27 +57,11 @@ class XMPPBridgeBot(ClientXMPP):
         """This coroutine is triggered whenever a message (both normal or from
         a MUC) is received. It relays the message to the bridge.
         """
-        from_jid = msg['from']
         logging.debug("--> Received message from XMPP by {}: {}".format(
-                                                        from_jid, msg['body']))
-        if msg['type'] in ('chat', 'normal'):
-            out_webhooks = self.main_bridge.outgoing_mappings['all_normal']
-            for outgoing_webhook in out_webhooks:
-                await self.main_bridge.handle_outgoing(outgoing_webhook, msg)
+            msg['from'], msg['body']))
 
-        elif msg['type'] == 'groupchat':
-            # TODO: Handle nickname of private message in MUCs.
-            if from_jid.resource == self.main_bridge.mucs[from_jid.bare]:
-                # Don't relay messages from ourselves.
-                return
-
-        else:
-            # Only handle normal chats and MUCs.
-            return
-
-        out_webhooks = self.main_bridge.outgoing_mappings[from_jid.bare]
-        for outgoing_webhook in out_webhooks:
-            await self.main_bridge.handle_outgoing(outgoing_webhook, msg)
+        for bridge in self.main_bridge.bridges:
+            await bridge.handle_incoming_xmpp(msg)
 
     async def connection_failed(self, error):
         """This coroutine is triggered when the connection to the XMPP server
