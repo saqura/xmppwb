@@ -238,8 +238,17 @@ class SingleBridge:
             # This webhook is not handled by this bridge.
             return
 
+        self.send_to_all_xmpp_endpoints(username, msg)
+
+    def send_to_all_xmpp_endpoints(self, username, msg, skip=list()):
+        """Send the given message from the given user to all XMPP endpoints
+        of this bridge, except for the JIDs in the `skip`-list.
+        """
         msg = "{}: {}".format(username, msg)
         for xmpp_normal_jid in self.xmpp_normal_endpoints:
+            if xmpp_normal_jid in skip:
+                continue
+
             logging.debug("<-- Sending a normal chat message to XMPP.")
             self.main_bridge.xmpp_client.send_message(
                 mto=xmpp_normal_jid,
@@ -248,6 +257,9 @@ class SingleBridge:
                 mnick=username)
 
         for xmpp_muc_jid in self.xmpp_muc_endpoints:
+            if xmpp_muc_jid in skip:
+                continue
+
             logging.debug("<-- Sending a MUC chat message to XMPP.")
             self.main_bridge.xmpp_client.send_message(
                 mto=xmpp_muc_jid,
@@ -258,13 +270,20 @@ class SingleBridge:
     async def handle_incoming_xmpp(self, msg):
         """Handles an incoming XMPP message, from either a normal chat or
         a MUC."""
+        # Outgoing webhooks to trigger
         out_webhooks = list()
         from_jid = msg['from']
 
         if msg['type'] in ('chat', 'normal'):
-            if self.xmpp_relay_all_normal:
+            if from_jid.bare in self.xmpp_normal_endpoints:
                 out_webhooks = self.outgoing_webhooks
-            elif from_jid.bare in self.xmpp_normal_endpoints:
+
+                # Relay this message to the other XMPP endpoints of this bridge
+                self.send_to_all_xmpp_endpoints(from_jid.local,
+                                                msg['body'],
+                                                skip=[from_jid.bare])
+
+            elif self.xmpp_relay_all_normal:
                 out_webhooks = self.outgoing_webhooks
 
         elif msg['type'] == 'groupchat':
@@ -274,6 +293,11 @@ class SingleBridge:
                 return
             elif from_jid.bare in self.xmpp_muc_endpoints:
                 out_webhooks = self.outgoing_webhooks
+
+                # Relay this message to the other XMPP endpoints of this bridge
+                self.send_to_all_xmpp_endpoints(from_jid.resource,
+                                                msg['body'],
+                                                skip=[from_jid.bare])
 
         else:
             # Only handle normal chats and MUCs.
