@@ -37,8 +37,10 @@ class XMPPWebhookBridge:
             xmpp_address = tuple()
             if 'host' in cfg['xmpp']:
                 xmpp_address = (cfg['xmpp']['host'], cfg['xmpp']['port'])
-
+            # Parse the MUC definitions
             self.get_mucs(cfg)
+            if len(self.mucs) == 0:
+                logging.info("No MUCs defined.")
         except KeyError:
             raise InvalidConfigError
 
@@ -172,6 +174,9 @@ class XMPPWebhookBridge:
 
     def get_mucs(self, cfg):
         """Reads the MUC definitions from the config file."""
+        if 'muc' not in cfg['xmpp']:
+            return
+
         for muc in cfg['xmpp']['mucs']:
             jid = muc['jid']
             nickname = muc['nickname']

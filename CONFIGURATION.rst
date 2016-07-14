@@ -30,7 +30,8 @@ Section: xmpp
 | **password**         | The corresponding password.                            |
 +----------------------+--------------------------------------------------------+
 | **mucs**             | A **list** of all MUCs that should be available to the |
-|                      | bridges defined later.                                 |
+|                      | bridges defined later. This section can be ommitted if |
+|                      | no MUCs are used in any of the bridges.                |
 +----------------------+--------------------------------------------------------+
 | **host**             | **Optional:** The hostname of the XMPP server. This is |
 |                      | only needed if the DNS entries of the XMPP server are  |
