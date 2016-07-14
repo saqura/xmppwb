@@ -174,7 +174,7 @@ class XMPPWebhookBridge:
 
     def get_mucs(self, cfg):
         """Reads the MUC definitions from the config file."""
-        if 'muc' not in cfg['xmpp']:
+        if 'mucs' not in cfg['xmpp']:
             return
 
         for muc in cfg['xmpp']['mucs']:
