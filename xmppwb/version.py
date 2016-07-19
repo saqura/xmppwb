@@ -12,4 +12,4 @@ This module contains the xmppwb version.
 # setup.py without importing the whole package.
 # See: http://python-packaging-user-guide.readthedocs.org/en/latest/single_source_version/
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
