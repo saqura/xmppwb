@@ -219,3 +219,13 @@ Each entry in ``incoming_webhooks`` has the following item:
 | **token: <string>**  | Only incoming webhooks that have a matching token will |
 |                      | be considered part of this bridge.                     |
 +----------------------+--------------------------------------------------------+
+| **ignore_user**      | **Optional:** A **list** of users whose messages will  |
+|                      | be ignored.                                            |
+|                      |                                                        |
+|                      | The motivation for this option is to prevent outgoing  |
+|                      | messages to chat systems like Rocket.Chat from being   |
+|                      | relayed back into the bridge, which would result in    |
+|                      | duplicate messages. Usually, the name of the bot that  |
+|                      | posts incoming messages to the chat system is listed   |
+|                      | here.                                                  |
++----------------------+--------------------------------------------------------+

@@ -86,7 +86,6 @@ for detailed documentation. A simple config file looks like this (the
           - muc: <conference1@conference.example.com>
         outgoing_webhooks:
           - url: <incoming-webhook-url-from-other-end>
-            override_username: "{nick}"
         incoming_webhooks:
           - token: <outgoing-webhook-token-from-other-end>
 

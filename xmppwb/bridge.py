@@ -222,7 +222,6 @@ class SingleBridge:
         self.xmpp_normal_endpoints = list()
         self.xmpp_relay_all_normal = False
 
-        # List of tokens of incoming webhooks for this bridge
         self.incoming_webhooks = list()
 
         self.outgoing_webhooks = list()
@@ -239,11 +238,16 @@ class SingleBridge:
         """Handles an incoming webhook with the given token, username
         and message.
         """
-        if token not in self.incoming_webhooks:
-            # This webhook is not handled by this bridge.
-            return
+        for incoming_webhook in self.incoming_webhooks:
+            if incoming_webhook['token'] != token:
+                # This webhook is not handled by this bridge.
+                continue
 
-        self.send_to_all_xmpp_endpoints(username, msg)
+            if username in incoming_webhook['ignore_user']:
+                # Messages from this user are ignored.
+                continue
+
+            self.send_to_all_xmpp_endpoints(username, msg)
 
     def send_to_all_xmpp_endpoints(self, username, msg, skip=list()):
         """Send the given message from the given user to all XMPP endpoints
@@ -325,8 +329,9 @@ class SingleBridge:
                 raise InvalidConfigError("Invalid config file: "
                                          "'token' missing from outgoing "
                                          "webhook definition.")
-            token = incoming_webhook['token']
-            self.incoming_webhooks.append(token)
+            if 'ignore_user' not in incoming_webhook:
+                incoming_webhook['ignore_user'] = list()
+            self.incoming_webhooks.append(incoming_webhook)
 
     def _parse_outgoing_webhooks(self, bridge_cfg):
         """Parses the `outgoing webhooks` from this bridge's config file
