@@ -96,20 +96,10 @@ class XMPPWebhookBridge:
         from_jid = msg['from']
         username = str(from_jid)
         if 'override_username' in outgoing_webhook:
-            if msg['type'] == 'groupchat':
-                username = outgoing_webhook['override_username'].format(
-                    bare_jid=from_jid.bare,
-                    full_jid=from_jid.full,
-                    local_jid=from_jid.local,
-                    nick=from_jid.resource,
-                    jid=from_jid.full)
-            else:
-                username = outgoing_webhook['override_username'].format(
-                    bare_jid=from_jid.bare,
-                    full_jid=from_jid.full,
-                    local_jid=from_jid.local,
-                    nick=from_jid.local,
-                    jid=from_jid.bare)
+            username = self.format_jid_string(
+                outgoing_webhook['override_username'],
+                from_jid,
+                msg['type'] == 'groupchat')
 
         message = msg['body']
         if 'message_template' in outgoing_webhook:
@@ -123,6 +113,13 @@ class XMPPWebhookBridge:
 
         if 'override_channel' in outgoing_webhook:
             payload['channel'] = outgoing_webhook['override_channel']
+
+        if 'avatar_url' in outgoing_webhook:
+            icon_url = self.format_jid_string(
+                outgoing_webhook['avatar_url'],
+                from_jid,
+                msg['type'] == 'groupchat')
+            payload['icon_url'] = icon_url
 
         # Attachment formatting is useful for integrating with RocketChat.
         if ('use_attachment_formatting' in outgoing_webhook and
@@ -183,6 +180,29 @@ class XMPPWebhookBridge:
             self.mucs[jid] = nickname
             if 'password' in muc:
                 self.muc_passwords[jid] = muc['password']
+
+    def format_jid_string(self, string, jid, is_groupchat=False):
+        """Formats the given string by replacing all placeholders.
+
+        The placeholders are replaced with corresponding values from the JID.
+        """
+        formatted_string = ""
+        if is_groupchat:
+            formatted_string = string.format(
+                bare_jid=jid.bare,
+                full_jid=jid.full,
+                local_jid=jid.local,
+                nick=jid.resource,
+                jid=jid.full)
+        else:
+            formatted_string = string.format(
+                bare_jid=jid.bare,
+                full_jid=jid.full,
+                local_jid=jid.local,
+                nick=jid.local,
+                jid=jid.bare)
+
+        return formatted_string
 
     def close(self):
         """Closes all open connections, servers and handlers. This is used

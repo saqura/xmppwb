@@ -180,6 +180,22 @@ Each entry in ``outgoing_webhooks`` has the following items:
 |                        |   is the bare JID. When relaying from a MUC this is  |
 |                        |   the full JID.                                      |
 +------------------------+------------------------------------------------------+
+| **avatar_url:**        | **Optional:** The URL that is sent in the            |
+| **<string>**           | ``icon_url`` field in the outgoing webhook to set an |
+|                        | avatar. It may contain the same placeholders as      |
+|                        | ``override_username`` (see above).                   |
+|                        |                                                      |
+|                        | For Rocket.Chat, it can be set to the value          |
+|                        | ``https://ROCKETCHATURL/avatar/{nick}.jpg`` where    |
+|                        | ROCKETCHATURL needs to be replaced with the URL of   |
+|                        | the Rocket.Chat instance.                            |
+|                        |                                                      |
+|                        | **WARNING:** As XMPP nicknames can be freely chosen, |
+|                        | setting this option may enable impersonating other   |
+|                        | people by having their avatar displayed. It is       |
+|                        | therefore only recommended to use this option in     |
+|                        | private setups where you trust all involved users.   |
++------------------------+------------------------------------------------------+
 | **message_template:**  | **Optional:** The message that is sent as part of    |
 | **<string>**           | the outgoing webhook can be overwritten. The         |
 |                        | folowing placeholders may be used:                   |
