@@ -4,7 +4,8 @@ Configuration Options
 
 The following is a detailed overview of all available options. The documentation
 of each section begins with a simple example. Refer to the example config files
-to see how these can be combined.
+to see how these can be combined. The config file is in YAML format, which means
+that tabs are not allowed.
 
 =============
 Section: xmpp

@@ -72,6 +72,13 @@ def main():
     except FileNotFoundError:
         logging.error("Config file not found. Exiting...")
         sys.exit(1)
+    except yaml.scanner.ScannerError as e:
+        logging.error("Error while loading config file. "
+                      + "This can be caused by tabs in the config file! "
+                      + "Remember to remove all tabs and uses spaces instead. "
+                      + "Exiting...")
+        logging.debug(e)
+        sys.exit(1)
 
     try:
         bridge = XMPPWebhookBridge(cfg, loop)
