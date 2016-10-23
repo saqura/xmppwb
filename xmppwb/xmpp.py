@@ -41,15 +41,15 @@ class XMPPBridgeBot(ClientXMPP):
             logging.debug("Joining MUC '{}' using nickname '{}'.".format(
                                                                 muc, nickname))
             if muc in self.main_bridge.muc_passwords:
-                self.plugin['xep_0045'].joinMUC(
+                self.plugin['xep_0045'].join_muc(
                     muc,
                     nickname,
                     wait=True,
                     password=self.main_bridge.muc_passwords[muc])
             else:
-                self.plugin['xep_0045'].joinMUC(muc,
-                                                nickname,
-                                                wait=True)
+                self.plugin['xep_0045'].join_muc(muc,
+                                                 nickname,
+                                                 wait=True)
 
         logging.info("Connected to XMPP.")
 
